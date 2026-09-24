@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const SECRET_KEY = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "presence_bureau_secret_key_super_secure_12345"
-);
+function getSecretKey(): Uint8Array {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Configuration critique : variable d'environnement AUTH_SECRET manquante en production.");
+    }
+    return new TextEncoder().encode("presence_bureau_dev_fallback_secret_key_12345");
+  }
+  return new TextEncoder().encode(secret);
+}
 
 const PUBLIC_ROUTES = ["/login", "/register"];
 
@@ -19,12 +26,12 @@ export async function middleware(req: NextRequest) {
   }
 
   const token = req.cookies.get("auth_token")?.value;
-  let user: any = null;
+  let user: { id: string; role?: string; [key: string]: unknown } | null = null;
 
   if (token) {
     try {
-      const { payload } = await jwtVerify(token, SECRET_KEY);
-      user = payload;
+      const { payload } = await jwtVerify(token, getSecretKey());
+      user = payload as unknown as { id: string; role?: string };
     } catch {
       // Ignorer si invalide
     }

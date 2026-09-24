@@ -1,17 +1,20 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { checkAdminSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
-export type ActionResult = {
+export type ActionResult<T = unknown> = {
   success?: boolean;
   error?: string;
+  data?: T;
 };
 
-export async function createTeamAction(formData: FormData): Promise<ActionResult> {
+export async function createTeamAction(
+  formData: FormData
+): Promise<ActionResult<{ id: string; name: string; _count: { members: number } }>> {
   try {
-    await requireAdmin();
+    await checkAdminSession();
     const name = formData.get("name")?.toString().trim();
 
     if (!name) {
@@ -26,21 +29,29 @@ export async function createTeamAction(formData: FormData): Promise<ActionResult
       return { error: "Une équipe avec ce nom existe déjà." };
     }
 
-    await prisma.team.create({
+    const created = await prisma.team.create({
       data: { name },
+      select: {
+        id: true,
+        name: true,
+      },
     });
 
     revalidatePath("/admin");
     revalidatePath("/register");
-    return { success: true };
-  } catch (e: any) {
-    return { error: e.message || "Erreur lors de la création de l'équipe." };
+    revalidatePath("/");
+    return {
+      success: true,
+      data: { id: created.id, name: created.name, _count: { members: 0 } },
+    };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la création de l'équipe." };
   }
 }
 
 export async function deleteTeamAction(teamId: string): Promise<ActionResult> {
   try {
-    await requireAdmin();
+    await checkAdminSession();
 
     // Les utilisateurs rattachés verront leur teamId passer à null (onDelete: SetNull)
     await prisma.team.delete({
@@ -50,8 +61,8 @@ export async function deleteTeamAction(teamId: string): Promise<ActionResult> {
     revalidatePath("/admin");
     revalidatePath("/");
     return { success: true };
-  } catch (e: any) {
-    return { error: e.message || "Erreur lors de la suppression de l'équipe." };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la suppression de l'équipe." };
   }
 }
 
@@ -60,7 +71,7 @@ export async function updateUserTeamAction(
   teamId: string | null
 ): Promise<ActionResult> {
   try {
-    await requireAdmin();
+    await checkAdminSession();
 
     await prisma.user.update({
       where: { id: userId },
@@ -70,8 +81,8 @@ export async function updateUserTeamAction(
     revalidatePath("/admin");
     revalidatePath("/");
     return { success: true };
-  } catch (e: any) {
-    return { error: e.message || "Erreur lors du changement d'équipe." };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors du changement d'équipe." };
   }
 }
 
@@ -80,7 +91,7 @@ export async function updateUserRoleAction(
   role: "USER" | "ADMIN"
 ): Promise<ActionResult> {
   try {
-    const currentAdmin = await requireAdmin();
+    const currentAdmin = await checkAdminSession();
 
     // Empêcher un admin de s'auto-rétrograder pour ne pas bloquer l'accès
     if (currentAdmin.id === userId && role === "USER") {
@@ -94,14 +105,14 @@ export async function updateUserRoleAction(
 
     revalidatePath("/admin");
     return { success: true };
-  } catch (e: any) {
-    return { error: e.message || "Erreur lors de la modification du rôle." };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la modification du rôle." };
   }
 }
 
 export async function deleteUserAction(userId: string): Promise<ActionResult> {
   try {
-    const currentAdmin = await requireAdmin();
+    const currentAdmin = await checkAdminSession();
 
     if (currentAdmin.id === userId) {
       return { error: "Vous ne pouvez pas supprimer votre propre compte administrateur." };
@@ -114,7 +125,7 @@ export async function deleteUserAction(userId: string): Promise<ActionResult> {
     revalidatePath("/admin");
     revalidatePath("/");
     return { success: true };
-  } catch (e: any) {
-    return { error: e.message || "Erreur lors de la suppression de l'utilisateur." };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la suppression de l'utilisateur." };
   }
 }
