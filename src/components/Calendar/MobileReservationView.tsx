@@ -16,6 +16,8 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Sparkles,
   Download,
   Settings,
@@ -334,14 +336,53 @@ export default function MobileReservationView({
     }
   };
 
+  // Navigation contextuelle pour la barre de semaine :
+  // - En vue semaine : saute de semaine en semaine (+/- 7 jours)
+  // - En vue jour    : continue de naviguer jour par jour (+/- 1 jour)
+  const handleNavPrev = () => {
+    if (scheduleViewMode === "week") {
+      handlePrevWeek();
+    } else {
+      handlePrevDay();
+    }
+  };
+
+  const handleNavNext = () => {
+    if (scheduleViewMode === "week") {
+      handleNextWeek();
+    } else {
+      handleNextDay();
+    }
+  };
+
   const handleGoToToday = () => {
     setSelectedDateKey(todayKey);
     setWeekStart(getMonday(today));
     loadMonthData(today);
   };
 
+  // État d'expansion des jours en vue semaine
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
+
+  const toggleDayExpanded = (dateKey: string) => {
+    setExpandedDays((prev) => ({
+      ...prev,
+      [dateKey]: !prev[dateKey],
+    }));
+    setSelectedDateKey(dateKey);
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+
   const handleSelectDay = (dateKey: string) => {
     setSelectedDateKey(dateKey);
+    if (scheduleViewMode === "week") {
+      setExpandedDays((prev) => ({
+        ...prev,
+        [dateKey]: true,
+      }));
+    }
     if (typeof window !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate(10);
     }
@@ -609,8 +650,10 @@ export default function MobileReservationView({
         <div className="flex items-center justify-between gap-1 mb-2">
           <button
             onClick={handlePrevWeek}
+            data-testid="week-prev-btn"
             className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg active-press transition"
             title="Semaine précédente"
+            aria-label="Semaine précédente"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -634,8 +677,10 @@ export default function MobileReservationView({
             </button>
             <button
               onClick={handleNextWeek}
+              data-testid="week-next-btn"
               className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg active-press transition"
               title="Semaine suivante"
+              aria-label="Semaine suivante"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -645,9 +690,11 @@ export default function MobileReservationView({
         {/* LIGNE 2 : BANDEAU HORIZONTAL DE JOURS SCROLLABLE */}
         <div className="flex items-center gap-1">
           <button
-            onClick={handlePrevDay}
+            onClick={handleNavPrev}
+            data-testid="nav-prev-btn"
             className="p-1 text-gray-400 hover:text-gray-700 active-press shrink-0"
-            title="Jour précédent"
+            title={scheduleViewMode === "week" ? "Semaine précédente" : "Jour précédent"}
+            aria-label={scheduleViewMode === "week" ? "Semaine précédente" : "Jour précédent"}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -732,9 +779,11 @@ export default function MobileReservationView({
           </div>
 
           <button
-            onClick={handleNextDay}
+            onClick={handleNavNext}
+            data-testid="nav-next-btn"
             className="p-1 text-gray-400 hover:text-gray-700 active-press shrink-0"
-            title="Jour suivant"
+            title={scheduleViewMode === "week" ? "Semaine suivante" : "Jour suivant"}
+            aria-label={scheduleViewMode === "week" ? "Semaine suivante" : "Jour suivant"}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -1015,7 +1064,7 @@ export default function MobileReservationView({
               </div>
             </div>
           ) : (
-            /* --- VUE SEMAINE COMPLÈTE (LISTE COMPACTE 5 JOURS) --- */
+            /* --- VUE SEMAINE COMPLÈTE (LISTE COMPACTE 5 JOURS AVEC EXPANSION) --- */
             <div className="space-y-2">
               {weekDays.slice(0, 5).map((day) => {
                 const uDay = presencesMap[day.dateKey]?.[currentUser.id] || {
@@ -1026,91 +1075,186 @@ export default function MobileReservationView({
                 const fullRem = uDay.am === "REMOTE" && uDay.pm === "REMOTE";
                 const fullAbs = uDay.am === "ABSENT" && uDay.pm === "ABSENT";
                 const b = getDayPresenceBreakdown(day.dateKey);
+                const isExpanded = !!expandedDays[day.dateKey];
 
                 return (
                   <div
                     key={day.dateKey}
-                    className={`bg-[var(--card-bg)] rounded-xl p-2.5 border transition shadow-xs flex items-center justify-between gap-2 ${
+                    data-testid={`week-day-card-${day.dateKey}`}
+                    className={`bg-[var(--card-bg)] rounded-xl border transition shadow-xs overflow-hidden ${
                       day.isSelected
                         ? "border-blue-500 ring-2 ring-blue-500/20"
                         : "border-[var(--border)]"
                     }`}
                   >
-                    {/* Gauche : Jour & Compteur collègues */}
-                    <button
-                      onClick={() => handleSelectDay(day.dateKey)}
-                      className="text-left min-w-0 flex items-center gap-2"
+                    {/* Ligne principale cliquable pour déplier/replier */}
+                    <div
+                      data-testid={`week-day-row-${day.dateKey}`}
+                      onClick={() => toggleDayExpanded(day.dateKey)}
+                      className="p-2.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-50/70 transition select-none"
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleDayExpanded(day.dateKey);
+                        }
+                      }}
                     >
-                      <span
-                        className={`w-8 h-8 rounded-lg flex flex-col items-center justify-center font-bold text-[10px] shrink-0 ${
-                          day.isToday ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        <span className="leading-none text-[8.5px] opacity-80">{day.dayName}</span>
-                        <span className="leading-none mt-0.5 text-[11px]">{day.dayNumber}</span>
-                      </span>
+                      {/* Gauche : Jour & Compteur collègues */}
+                      <div className="text-left min-w-0 flex items-center gap-2 flex-1">
+                        <span
+                          className={`w-8 h-8 rounded-lg flex flex-col items-center justify-center font-bold text-[10px] shrink-0 ${
+                            day.isToday ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          <span className="leading-none text-[8.5px] opacity-80">{day.dayName}</span>
+                          <span className="leading-none mt-0.5 text-[11px]">{day.dayNumber}</span>
+                        </span>
 
-                      <div className="truncate">
-                        <div className="text-xs font-bold text-gray-900 capitalize truncate">
-                          {new Intl.DateTimeFormat("fr-FR", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                          }).format(day.date)}
-                        </div>
-                        <div className="text-[10.5px] text-gray-500 truncate">
-                          {b.atOffice.length > 0 ? (
-                            <span className="text-emerald-700 font-semibold">
-                              🏢 {b.atOffice.length} au bureau
+                        <div className="truncate">
+                          <div className="text-xs font-bold text-gray-900 capitalize truncate flex items-center gap-1.5">
+                            <span>
+                              {new Intl.DateTimeFormat("fr-FR", {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                              }).format(day.date)}
                             </span>
-                          ) : (
-                            <span className="text-gray-400">0 au bureau</span>
-                          )}
+                            {isExpanded ? (
+                              <ChevronUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            )}
+                          </div>
+                          <div className="text-[10.5px] text-gray-500 truncate flex items-center gap-1">
+                            {b.atOffice.length > 0 ? (
+                              <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                                🏢 {b.atOffice.length} au bureau
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">0 au bureau</span>
+                            )}
+                            <span className="text-gray-300">•</span>
+                            <span className="text-[10px] text-blue-600 font-medium">
+                              {isExpanded ? "Replier" : "Voir qui est là"}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </button>
 
-                    {/* Droite : 1-Tap Statuts compacts */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleSetDayStatus(day.dateKey, "OFFICE", "all")}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-bold border active-press transition ${
-                          fullOff
-                            ? "bg-emerald-600 text-white border-emerald-700"
-                            : "bg-emerald-50 text-emerald-800 border-emerald-200"
-                        }`}
-                        title="Journée au bureau"
+                      {/* Droite : 1-Tap Statuts compacts */}
+                      <div
+                        className="flex items-center gap-1 shrink-0"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        🏢 Bureau
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSetDayStatus(day.dateKey, "OFFICE", "all")}
+                          className={`px-2 py-1 rounded-lg text-[11px] font-bold border active-press transition ${
+                            fullOff
+                              ? "bg-emerald-600 text-white border-emerald-700"
+                              : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          }`}
+                          title="Journée au bureau"
+                        >
+                          🏢 Bureau
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleSetDayStatus(day.dateKey, "REMOTE", "all")}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-bold border active-press transition ${
-                          fullRem
-                            ? "bg-indigo-600 text-white border-indigo-700"
-                            : "bg-indigo-50 text-indigo-800 border-indigo-200"
-                        }`}
-                        title="Journée en télétravail"
-                      >
-                        🏠 TT
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSetDayStatus(day.dateKey, "REMOTE", "all")}
+                          className={`px-2 py-1 rounded-lg text-[11px] font-bold border active-press transition ${
+                            fullRem
+                              ? "bg-indigo-600 text-white border-indigo-700"
+                              : "bg-indigo-50 text-indigo-800 border-indigo-200"
+                          }`}
+                          title="Journée en télétravail"
+                        >
+                          🏠 TT
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleSetDayStatus(day.dateKey, "ABSENT", "all")}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-bold border active-press transition ${
-                          fullAbs
-                            ? "bg-rose-600 text-white border-rose-700"
-                            : "bg-rose-50 text-rose-800 border-rose-200"
-                        }`}
-                        title="Absent"
-                      >
-                        🌴
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSetDayStatus(day.dateKey, "ABSENT", "all")}
+                          className={`px-2 py-1 rounded-lg text-[11px] font-bold border active-press transition ${
+                            fullAbs
+                              ? "bg-rose-600 text-white border-rose-700"
+                              : "bg-rose-50 text-rose-800 border-rose-200"
+                          }`}
+                          title="Absent"
+                        >
+                          🌴
+                        </button>
+                      </div>
                     </div>
+
+                    {/* CONTENU DÉPLIÉ (EXPAND) : QUI VA SE TROUVER AU BUREAU CETTE JOURNÉE LÀ */}
+                    {isExpanded && (
+                      <div
+                        data-testid={`expanded-office-list-${day.dateKey}`}
+                        className="px-3 pb-3 pt-2 bg-gray-50/80 border-t border-gray-100 animate-in fade-in slide-in-from-top-1 duration-150 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-emerald-800 flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+                            Au bureau ({b.atOffice.length})
+                          </span>
+                        </div>
+
+                        {b.atOffice.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            {b.atOffice.map(({ member, period }) => {
+                              const isMe = member.id === currentUser.id;
+                              return (
+                                <div
+                                  key={member.id}
+                                  className="flex items-center justify-between p-2 rounded-xl bg-white border border-emerald-200 text-xs shadow-2xs"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] flex items-center justify-center shrink-0">
+                                      {member.firstName.charAt(0)}{member.lastName.charAt(0)}
+                                    </div>
+                                    <span className="font-semibold text-gray-900 truncate">
+                                      {member.firstName} {member.lastName}
+                                      {isMe && (
+                                        <span className="text-[10px] text-emerald-700 font-bold ml-1">
+                                          (Vous)
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 shrink-0">
+                                    {period === "all"
+                                      ? "Toute la journée"
+                                      : period === "am"
+                                      ? "Matin (AM)"
+                                      : "Après-midi (PM)"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="p-2.5 rounded-xl bg-white/80 border border-dashed border-gray-200 text-center">
+                            <p className="text-xs text-gray-500 italic">
+                              Aucun collègue n&apos;a encore réservé au bureau pour cette journée.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Mention discrète des collègues en télétravail */}
+                        {b.atRemote.length > 0 && (
+                          <div className="pt-1.5 border-t border-gray-200/60 flex items-center gap-1.5 text-[10.5px] text-indigo-700">
+                            <Home className="w-3 h-3 text-indigo-500 shrink-0" />
+                            <span className="font-medium">
+                              En télétravail ({b.atRemote.length}) : {b.atRemote.map((r) => r.member.firstName).join(", ")}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
