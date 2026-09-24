@@ -8,7 +8,7 @@ import { Shield, Users } from "lucide-react";
 export default async function HomePage() {
   const session = await requireAuth();
 
-  // Si admin, charger toutes les équipes disponibles
+  // Si admin, charger toutes les équipes disponibles, sinon l'équipe active
   const allTeams = session.role === "ADMIN"
     ? await prisma.team.findMany({
         select: { id: true, name: true },
@@ -89,7 +89,7 @@ export default async function HomePage() {
             initialMonth={month}
             initialMembers={teamMembers}
             initialPresences={initialPresences}
-            allTeams={allTeams}
+            allTeams={allTeams.length > 0 ? allTeams : (activeTeam ? [{ id: activeTeam.id, name: activeTeam.name }] : [])}
             activeTeamId={activeTeamId}
           />
         )}

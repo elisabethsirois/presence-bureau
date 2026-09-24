@@ -541,7 +541,7 @@ export default function MobileReservationView({
     <div className="w-full max-w-md mx-auto pb-24 text-[var(--text)]">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-gray-900/90 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-xl backdrop-blur-sm flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -849,6 +849,7 @@ export default function MobileReservationView({
                   <div className="grid grid-cols-4 gap-1.5">
                     <button
                       type="button"
+                      data-testid="btn-action-office"
                       onClick={() => handleSetDayStatus(selectedDateKey, "OFFICE", "all")}
                       className={`py-2.5 px-1 rounded-xl text-center text-xs font-bold border transition active-press flex flex-col items-center justify-center gap-1 ${
                         isFullOffice
@@ -862,6 +863,7 @@ export default function MobileReservationView({
 
                     <button
                       type="button"
+                      data-testid="btn-action-remote"
                       onClick={() => handleSetDayStatus(selectedDateKey, "REMOTE", "all")}
                       className={`py-2.5 px-1 rounded-xl text-center text-xs font-bold border transition active-press flex flex-col items-center justify-center gap-1 ${
                         isFullRemote
@@ -875,6 +877,7 @@ export default function MobileReservationView({
 
                     <button
                       type="button"
+                      data-testid="btn-action-absent"
                       onClick={() => handleSetDayStatus(selectedDateKey, "ABSENT", "all")}
                       className={`py-2.5 px-1 rounded-xl text-center text-xs font-bold border transition active-press flex flex-col items-center justify-center gap-1 ${
                         isFullAbsent
@@ -888,6 +891,7 @@ export default function MobileReservationView({
 
                     <button
                       type="button"
+                      data-testid="btn-action-clear"
                       onClick={() => handleSetDayStatus(selectedDateKey, "NONE", "all")}
                       className="py-2.5 px-1 rounded-xl text-center text-xs font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 border border-gray-200 transition active-press flex flex-col items-center justify-center gap-1"
                       title="Effacer la journée"
