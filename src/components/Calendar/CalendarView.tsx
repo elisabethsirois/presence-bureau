@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import { SessionUser } from "@/lib/auth";
 import { togglePresenceAction, getMonthPresencesAction } from "@/lib/actions/presence";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, Smartphone } from "lucide-react";
+import MobileReservationView from "./MobileReservationView";
 
 export type StatusType = "NONE" | "OFFICE" | "REMOTE" | "ABSENT";
 
@@ -71,6 +72,20 @@ export default function CalendarView({
 
   const [isPending, startTransition] = useTransition();
 
+  const [viewMode, setViewMode] = useState<"auto" | "mobile" | "desktop">("auto");
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileScreen(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const isMobile = viewMode === "mobile" || (viewMode === "auto" && isMobileScreen);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth(); // 0-11
   const today = new Date();
@@ -82,8 +97,9 @@ export default function CalendarView({
     year: "numeric",
   }).format(currentDate);
 
+
   // Changement de mois ou d'équipe
-  const loadMonthData = (targetDate: Date, targetTeamId?: string) => {
+  const loadMonthData = useCallback((targetDate: Date, targetTeamId?: string) => {
     setCurrentDate(targetDate);
     startTransition(async () => {
       const res = await getMonthPresencesAction(
@@ -103,7 +119,34 @@ export default function CalendarView({
       }
       setPresencesMap(newMap);
     });
-  };
+  }, [selectedTeamId]);
+
+  // Auto-refresh pour récupérer les présences et inscriptions en temps réel
+  useEffect(() => {
+    const refresh = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
+      loadMonthData(currentDate, selectedTeamId);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const interval = setInterval(refresh, 5000);
+
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [currentDate, selectedTeamId, loadMonthData]);
 
   const handlePrevMonth = () => {
     const d = new Date(year, month - 1, 1);
@@ -174,8 +217,25 @@ export default function CalendarView({
   const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
   return (
-    <div className="w-full max-w-[1240px] mx-auto">
-      {/* Barre de contrôle Admin pour basculer d'équipe */}
+    <div className="w-full">
+      {viewMode !== "desktop" && (
+        <div className={viewMode === "mobile" ? "block" : "block md:hidden"}>
+          <MobileReservationView
+            currentUser={currentUser}
+            initialYear={initialYear}
+            initialMonth={initialMonth}
+            initialMembers={teamMembers}
+            initialPresences={initialPresences}
+            allTeams={allTeams}
+            activeTeamId={selectedTeamId}
+            onSwitchToDesktop={() => setViewMode("desktop")}
+          />
+        </div>
+      )}
+
+      {viewMode !== "mobile" && (
+        <div className={viewMode === "desktop" ? "block w-full max-w-[1240px] mx-auto" : "hidden md:block w-full max-w-[1240px] mx-auto"}>
+          {/* Barre de contrôle Admin pour basculer d'équipe */}
       {currentUser.role === "ADMIN" && allTeams && allTeams.length > 0 && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex items-center gap-2 text-amber-900 font-medium">
@@ -220,6 +280,13 @@ export default function CalendarView({
         <h2 className="text-xl font-bold capitalize text-[var(--text)] flex items-center gap-2">
           <CalendarIcon className="w-5 h-5 text-[var(--primary)]" />
           {monthName}
+          <span
+            className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 normal-case"
+            title="Mises à jour automatiques en direct actives"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Direct</span>
+          </span>
           {isPending && (
             <span className="text-xs font-normal text-[var(--muted)] animate-pulse">
               (chargement...)
@@ -227,7 +294,16 @@ export default function CalendarView({
           )}
         </h2>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode("mobile")}
+            className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition shadow-sm flex items-center gap-1.5"
+            title="Basculer vers la vue mobile optimisée pour les réservations rapides"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Vue Mobile (Rapide)</span>
+            <span className="sm:hidden">Mobile</span>
+          </button>
           <button
             onClick={handlePrevMonth}
             className="px-3 py-1.5 text-sm font-medium bg-[var(--card-bg)] border border-[var(--border)] rounded-lg hover:bg-gray-100 transition shadow-sm flex items-center gap-1"
@@ -380,5 +456,7 @@ export default function CalendarView({
         })}
       </div>
     </div>
+  )}
+</div>
   );
 }

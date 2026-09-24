@@ -14,6 +14,17 @@ Migrée depuis un prototype statique vers une architecture **Next.js 15 (App Rou
   - Découpage par demi-journée (**AM** et **PM**).
   - Bascule de statut au clic : `Bureau (Vert)` ➔ `Télétravail (Bleu)` ➔ `Absent (Rouge)` ➔ `Neutre / Non renseigné`.
   - Sauvegarde instantanée en base de données avec mise à jour optimiste.
+- **📱 Vue Mobile & Réservation Express (`/mobile`)** :
+  - **Ergonomie Mobile-First** : Expérience fluide optimisée pour écrans tactiles, avec détection automatique sur mobile et bascule possible depuis le desktop.
+  - **Réservation en 1 Clic** : Boutons tactiles pour réserver toute la journée (`Bureau`, `Télétravail`, `Absent`) ou demi-journée (`AM` / `PM`).
+  - **Modèles de Semaine Type (Batch)** : Application instantanée en 1 geste ("Toute la semaine au bureau", "Hybride 3j bureau / 2j TT", "Hybride 2j bureau / 3j TT", "100% Télétravail").
+  - **Onglet "Qui est là ?" (Mon Équipe)** : Vue en temps réel des collègues présents au bureau par jour, avec avatars et recherche instantanée.
+  - **Calendrier Mensuel Tactile** : Vue compacte avec pastilles de couleur et tiroir de réservation rapide.
+- **📲 Application Téléchargeable (PWA - Sans App Store)** :
+  - **Installation Directe** : Téléchargeable directement depuis le navigateur sans passer par l'App Store ou Google Play.
+  - **Plein Écran Natif (Mode Standalone)** : Expérience d'application mobile sans barre d'adresse de navigateur.
+  - **Web App Manifest (`manifest.json`) & Service Worker (`sw.js`)** : Icônes haute résolution (192x192, 512x512, maskable, iOS touch-icon) et mise en cache des ressources.
+  - **Guide d'installation intégré** : Détection automatique iOS (Safari "Sur l'écran d'accueil") et Chromium/Android ("Installer l'app").
 - **Rôle Administrateur (`/admin`)** :
   - **Gestion des Équipes** : Création et suppression d'équipes.
   - **Gestion des Utilisateurs** : Attribution d'équipe, promotion au rôle Admin, suppression de compte.

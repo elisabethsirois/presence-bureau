@@ -53,3 +53,24 @@ body {
   font-size: 10px;
   color: var(--muted);
 }
+
+/* Optimisations PWA & Mobile Ergonomics */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Animations légères pour feedback tactile instantané */
+.active-press:active {
+  transform: scale(0.97);
+  transition: transform 0.08s ease;
+}

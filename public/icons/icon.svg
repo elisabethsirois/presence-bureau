@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="100%" stop-color="#16a34a" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+
+  <!-- Calendar card -->
+  <g filter="url(#shadow)">
+    <rect x="88" y="104" width="336" height="304" rx="36" fill="#ffffff" />
+    <!-- Header strip -->
+    <path d="M 88 140 C 88 120, 104 104, 124 104 L 388 104 C 408 104, 424 120, 424 140 L 424 180 L 88 180 Z" fill="#3b82f6" />
+    
+    <!-- Binder rings -->
+    <rect x="156" y="80" width="28" height="48" rx="14" fill="#1e293b" />
+    <rect x="328" y="80" width="28" height="48" rx="14" fill="#1e293b" />
+
+    <!-- Calendar day cells / grid -->
+    <!-- Row 1 -->
+    <rect x="124" y="210" width="60" height="40" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3" />
+    <rect x="198" y="210" width="60" height="40" rx="8" fill="#e0e7ff" stroke="#4f46e5" stroke-width="3" />
+    <rect x="272" y="210" width="60" height="40" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3" />
+    <rect x="346" y="210" width="42" height="40" rx="8" fill="#f1f5f9" />
+
+    <!-- Row 2 -->
+    <rect x="124" y="264" width="60" height="40" rx="8" fill="#e0e7ff" stroke="#4f46e5" stroke-width="3" />
+    <rect x="198" y="264" width="60" height="40" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3" />
+    <rect x="272" y="264" width="60" height="40" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="3" />
+    <rect x="346" y="264" width="42" height="40" rx="8" fill="#f1f5f9" />
+
+    <!-- Row 3 -->
+    <rect x="124" y="318" width="60" height="40" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3" />
+    <rect x="198" y="318" width="60" height="40" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3" />
+    <rect x="272" y="318" width="60" height="40" rx="8" fill="#e0e7ff" stroke="#4f46e5" stroke-width="3" />
+    <rect x="346" y="318" width="42" height="40" rx="8" fill="#f1f5f9" />
+  </g>
+
+  <!-- Green Floating Badge in bottom right -->
+  <g filter="url(#shadow)">
+    <circle cx="390" cy="380" r="64" fill="url(#accent)" stroke="#ffffff" stroke-width="8" />
+    <!-- Checkmark icon -->
+    <path d="M 364 380 L 382 398 L 418 360" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>
