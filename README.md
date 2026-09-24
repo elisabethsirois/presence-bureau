@@ -1,4 +1,4 @@
-﻿# 📅 Présence Bureau - Gestion de Calendrier & Télétravail
+# 📅 Présence Bureau - Gestion de Calendrier & Télétravail
 
 Application web full-stack moderne pour la planification et le suivi des présences au bureau et en télétravail par équipe.  
 Migrée depuis un prototype statique vers une architecture **Next.js 15 (App Router)** avec persistance en base de données et gestion d'équipes étanches.
@@ -24,11 +24,13 @@ Migrée depuis un prototype statique vers une architecture **Next.js 15 (App Rou
 ## 🛠️ Stack Technique
 
 - **Frontend & Backend** : [Next.js 15](https://nextjs.org/) (App Router, React 19, Server Actions, TypeScript)
-- **Base de Données** : **SQLite** en développement local (fichier autonome `prisma/dev.db`, zéro configuration) ➔ compatible **PostgreSQL** (Supabase, Neon, Docker) pour la production
+- **Base de Données** : Double support transparent via Prisma :
+  - **SQLite** en développement local (`DATABASE_URL="file:./dev.db"`, zéro configuration requise)
+  - **PostgreSQL** en production sur Vercel ([Neon](https://neon.tech), Supabase, etc.)
+  - *Bascule automatique du provider Prisma* via le script `scripts/ensure-db-provider.js`
 - **ORM** : [Prisma ORM](https://www.prisma.io/)
-- **Authentification** : [NextAuth.js v5](https://authjs.dev/) / Sessions sécurisées
+- **Authentification** : Sessions sécurisées par cookies HTTP-only chiffrés ([jose](https://github.com/panva/jose) JWT) et hachage [bcryptjs](https://github.com/dcodeIO/bcrypt.js)
 - **Styling** : [Tailwind CSS](https://tailwindcss.com/) + variables CSS du prototype (`globals.css`)
-- **Validation** : [Zod](https://zod.dev/)
 - **Icônes** : [Lucide React](https://lucide.dev/)
 
 ---
@@ -65,23 +67,23 @@ Créez un fichier `.env` à la racine en copiant le modèle `.env.example` :
 cp .env.example .env
 ```
 
-Contenu par défaut du fichier `.env` :
+Contenu recommandé en local (`.env`) :
 ```env
 # URL de la base de données (SQLite en local)
 DATABASE_URL="file:./dev.db"
 
-# Clé secrète pour NextAuth (générer avec: npx auth secret ou openssl rand -base64 32)
-AUTH_SECRET="votre_cle_secrete_aleatoire"
+# Clé secrète de session (chaîne aléatoire longue)
+AUTH_SECRET="une_cle_secrete_aleatoire_tres_longue_12345"
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
 ### 4. Initialiser la Base de Données & Peupler les données de test
 ```bash
-# Appliquer les migrations Prisma
-npx prisma migrate dev --name init
+# Synchroniser le schéma Prisma avec la base locale (crée dev.db automatiquement)
+npm run db:push
 
-# Exécuter le script de seed (crée des équipes et des utilisateurs initiaux)
-npx prisma db seed
+# Exécuter le script de seed (crée les équipes et comptes initiaux)
+npm run db:seed
 ```
 
 ### 5. Lancer le serveur de développement
@@ -96,14 +98,43 @@ L'application est accessible à l'adresse : **[http://localhost:3000](http://loc
 
 | Commande | Description |
 | :--- | :--- |
-| `npm run dev` | Démarre le serveur de développement Next.js sur `http://localhost:3000` |
-| `npm run build` | Compile l'application pour la production |
+| `npm run dev` | Démarre le serveur de développement Next.js (avec synchronisation auto du provider DB) |
+| `npm run build` | Compile l'application pour la production (avec détection auto du provider DB et `prisma generate`) |
 | `npm run start` | Démarre l'application compilée en mode production |
 | `npm run lint` | Analyse le code avec ESLint pour détecter d'éventuelles erreurs |
-| `npx prisma migrate dev` | Crée et applique une nouvelle migration sur la base de données locale |
-| `npx prisma db seed` | Remplit la base de données avec les données initiales (équipes, admin, utilisateurs) |
-| `npx prisma studio` | Ouvre une interface web d'administration de la base de données sur `http://localhost:5555` |
-| `npx prisma generate` | Régénère le client TypeScript Prisma après modification de `schema.prisma` |
+| `npm run db:push` | Pousse le schéma Prisma directement vers la base de données active |
+| `npm run db:seed` | Remplit la base de données avec les données initiales (équipes, admin, utilisateurs) |
+| `npm run db:studio` | Ouvre l'interface web Prisma Studio pour explorer la base de données |
+| `npm run db:use:sqlite` | Force la configuration du schéma Prisma vers **SQLite** et régénère le client |
+| `npm run db:use:postgres` | Force la configuration du schéma Prisma vers **PostgreSQL** et régénère le client |
+
+---
+
+## 🌐 Déploiement en Ligne (Vercel & Neon)
+
+### 1. Créer une base de données PostgreSQL gratuite
+- Créez un compte gratuit sur [**Neon.tech**](https://neon.tech/) (ou directement dans le dashboard Vercel via l'onglet **Storage** > **Postgres**).
+- Récupérez votre chaîne de connexion `DATABASE_URL` (format : `postgresql://USER:PASSWORD@HOST/neondb?sslmode=require`).
+
+### 2. Initialiser la base de données
+Renseignez l'URL dans votre fichier `.env` local puis exécutez :
+```bash
+# Créer les tables sur la base PostgreSQL
+npm run db:push
+
+# Insérer les équipes et utilisateurs initiaux
+npm run db:seed
+```
+
+### 3. Déployer sur Vercel
+1. Poussez votre code sur GitHub : `git push origin main` (ou votre branche).
+2. Rendez-vous sur [**Vercel**](https://vercel.com/) et importez le dépôt GitHub.
+3. Dans la section **Environment Variables**, ajoutez :
+   - `DATABASE_URL` : Votre chaîne de connexion PostgreSQL Neon
+   - `AUTH_SECRET` : Une chaîne secrète aléatoire de votre choix
+   - `NEXTAUTH_URL` : L'URL Vercel de votre projet (ou laisser vide pour détection automatique)
+4. Cliquez sur **Deploy** ! Vercel compilera le projet automatiquement avec `vercel.json` et votre application sera en ligne.
+
 
 ---
 

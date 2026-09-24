@@ -1,0 +1,47 @@
+{
+  "name": "presence-bureau",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/ensure-db-provider.js",
+    "dev": "next dev",
+    "prebuild": "node scripts/ensure-db-provider.js",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "node scripts/ensure-db-provider.js && prisma generate",
+    "db:use:sqlite": "node scripts/ensure-db-provider.js sqlite && prisma generate",
+    "db:use:postgres": "node scripts/ensure-db-provider.js postgresql && prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.1",
+    "bcryptjs": "^3.0.2",
+    "clsx": "^2.1.1",
+    "jose": "^6.0.8",
+    "lucide-react": "^1.16.0",
+    "next": "^15.2.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.26",
+    "postcss": "^8.5.3",
+    "prisma": "^6.4.1",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
