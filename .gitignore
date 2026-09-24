@@ -39,3 +39,6 @@ next-env.d.ts
 /prisma/*.db-journal
 /prisma/*.db-shm
 /prisma/*.db-wal
+# SQLite backup
+/prisma/migrations_sqlite_backup
+*.tmp*

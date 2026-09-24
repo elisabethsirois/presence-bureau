@@ -1,4 +1,4 @@
-﻿# 📅 Présence Bureau - Gestion de Calendrier & Télétravail
+# 📅 Présence Bureau - Gestion de Calendrier & Télétravail
 
 Application web full-stack moderne pour la planification et le suivi des présences au bureau et en télétravail par équipe.  
 Migrée depuis un prototype statique vers une architecture **Next.js 15 (App Router)** avec persistance en base de données et gestion d'équipes étanches.
@@ -97,13 +97,41 @@ L'application est accessible à l'adresse : **[http://localhost:3000](http://loc
 | Commande | Description |
 | :--- | :--- |
 | `npm run dev` | Démarre le serveur de développement Next.js sur `http://localhost:3000` |
-| `npm run build` | Compile l'application pour la production |
+| `npm run build` | Compile l'application pour la production (exécute `prisma generate` avant) |
 | `npm run start` | Démarre l'application compilée en mode production |
 | `npm run lint` | Analyse le code avec ESLint pour détecter d'éventuelles erreurs |
-| `npx prisma migrate dev` | Crée et applique une nouvelle migration sur la base de données locale |
-| `npx prisma db seed` | Remplit la base de données avec les données initiales (équipes, admin, utilisateurs) |
-| `npx prisma studio` | Ouvre une interface web d'administration de la base de données sur `http://localhost:5555` |
+| `npm run db:push` | Pousse le schéma Prisma directement vers la base de données PostgreSQL |
+| `npm run db:seed` | Remplit la base de données avec les données initiales (équipes, admin, utilisateurs) |
+| `npm run db:studio` | Ouvre une interface web d'administration de la base de données sur `http://localhost:5555` |
 | `npx prisma generate` | Régénère le client TypeScript Prisma après modification de `schema.prisma` |
+
+---
+
+## 🌐 Déploiement en Ligne (Vercel & Neon)
+
+### 1. Créer une base de données PostgreSQL gratuite
+- Créez un compte gratuit sur [**Neon.tech**](https://neon.tech/) (ou directement dans le dashboard Vercel via l'onglet **Storage** > **Postgres**).
+- Récupérez votre chaîne de connexion `DATABASE_URL` (format : `postgresql://USER:PASSWORD@HOST/neondb?sslmode=require`).
+
+### 2. Initialiser la base de données
+Renseignez l'URL dans votre fichier `.env` local puis exécutez :
+```bash
+# Créer les tables sur la base PostgreSQL
+npm run db:push
+
+# Insérer les équipes et utilisateurs initiaux
+npm run db:seed
+```
+
+### 3. Déployer sur Vercel
+1. Poussez votre code sur GitHub : `git push origin main` (ou votre branche).
+2. Rendez-vous sur [**Vercel**](https://vercel.com/) et importez le dépôt GitHub.
+3. Dans la section **Environment Variables**, ajoutez :
+   - `DATABASE_URL` : Votre chaîne de connexion PostgreSQL Neon
+   - `AUTH_SECRET` : Une chaîne secrète aléatoire de votre choix
+   - `NEXTAUTH_URL` : L'URL Vercel de votre projet (ou laisser vide pour détection automatique)
+4. Cliquez sur **Deploy** ! Vercel compilera le projet automatiquement avec `vercel.json` et votre application sera en ligne.
+
 
 ---
 
