@@ -62,6 +62,113 @@ export async function togglePresenceAction(date: string, period: "am" | "pm") {
   return updated;
 }
 
+export async function setDayPresenceAction(
+  date: string,
+  status: "NONE" | "OFFICE" | "REMOTE" | "ABSENT",
+  period: "all" | "am" | "pm" = "all"
+) {
+  const session = await requireAuth();
+
+  const existing = await prisma.presence.findUnique({
+    where: {
+      date_userId: {
+        date,
+        userId: session.id,
+      },
+    },
+  });
+
+  const currentAm = existing?.amStatus || "NONE";
+  const currentPm = existing?.pmStatus || "NONE";
+
+  let nextAm = currentAm;
+  let nextPm = currentPm;
+
+  if (period === "all") {
+    nextAm = status;
+    nextPm = status;
+  } else if (period === "am") {
+    nextAm = status;
+  } else if (period === "pm") {
+    nextPm = status;
+  }
+
+  if (nextAm === "NONE" && nextPm === "NONE") {
+    if (existing) {
+      await prisma.presence.delete({
+        where: { id: existing.id },
+      });
+    }
+    revalidatePath("/");
+    return { date, userId: session.id, amStatus: "NONE", pmStatus: "NONE" };
+  }
+
+  const updated = await prisma.presence.upsert({
+    where: {
+      date_userId: {
+        date,
+        userId: session.id,
+      },
+    },
+    update: {
+      amStatus: nextAm,
+      pmStatus: nextPm,
+    },
+    create: {
+      date,
+      userId: session.id,
+      amStatus: nextAm,
+      pmStatus: nextPm,
+    },
+  });
+
+  revalidatePath("/");
+  return updated;
+}
+
+export async function batchSetPresencesAction(
+  entries: {
+    date: string;
+    amStatus: "NONE" | "OFFICE" | "REMOTE" | "ABSENT";
+    pmStatus: "NONE" | "OFFICE" | "REMOTE" | "ABSENT";
+  }[]
+) {
+  const session = await requireAuth();
+
+  for (const entry of entries) {
+    if (entry.amStatus === "NONE" && entry.pmStatus === "NONE") {
+      await prisma.presence.deleteMany({
+        where: {
+          date: entry.date,
+          userId: session.id,
+        },
+      });
+    } else {
+      await prisma.presence.upsert({
+        where: {
+          date_userId: {
+            date: entry.date,
+            userId: session.id,
+          },
+        },
+        update: {
+          amStatus: entry.amStatus,
+          pmStatus: entry.pmStatus,
+        },
+        create: {
+          date: entry.date,
+          userId: session.id,
+          amStatus: entry.amStatus,
+          pmStatus: entry.pmStatus,
+        },
+      });
+    }
+  }
+
+  revalidatePath("/");
+  return { success: true };
+}
+
 export async function getMonthPresencesAction(year: number, month: number, targetTeamId?: string) {
   const session = await requireAuth();
   const effectiveTeamId = targetTeamId && session.role === "ADMIN" ? targetTeamId : session.teamId;
@@ -71,7 +178,6 @@ export async function getMonthPresencesAction(year: number, month: number, targe
   }
 
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-  // Calculer dernier jour du mois
   const lastDay = new Date(year, month, 0).getDate();
   const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 

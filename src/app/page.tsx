@@ -57,9 +57,11 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8 bg-[var(--bg)]">
+    <div className="min-h-screen p-1.5 sm:p-6 lg:p-8 bg-[var(--bg)]">
       <div className="max-w-[1240px] mx-auto">
-        <Navbar user={session} activeTeamName={activeTeam?.name} />
+        <div className="hidden md:block">
+          <Navbar user={session} activeTeamName={activeTeam?.name} />
+        </div>
 
         {!activeTeamId ? (
           <div className="bg-[var(--card-bg)] border border-yellow-200 rounded-2xl p-8 text-center max-w-lg mx-auto shadow-sm mt-8">

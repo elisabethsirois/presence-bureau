@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { SessionUser } from "@/lib/auth";
 import { togglePresenceAction, getMonthPresencesAction } from "@/lib/actions/presence";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, Smartphone } from "lucide-react";
+import MobileReservationView from "./MobileReservationView";
 
 export type StatusType = "NONE" | "OFFICE" | "REMOTE" | "ABSENT";
 
@@ -71,6 +72,20 @@ export default function CalendarView({
 
   const [isPending, startTransition] = useTransition();
 
+  const [viewMode, setViewMode] = useState<"auto" | "mobile" | "desktop">("auto");
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileScreen(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const isMobile = viewMode === "mobile" || (viewMode === "auto" && isMobileScreen);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth(); // 0-11
   const today = new Date();
@@ -81,6 +96,23 @@ export default function CalendarView({
     month: "long",
     year: "numeric",
   }).format(currentDate);
+
+  if (isMobile) {
+    return (
+      <div className="w-full">
+        <MobileReservationView
+          currentUser={currentUser}
+          initialYear={initialYear}
+          initialMonth={initialMonth}
+          initialMembers={teamMembers}
+          initialPresences={initialPresences}
+          allTeams={allTeams}
+          activeTeamId={selectedTeamId}
+          onSwitchToDesktop={() => setViewMode("desktop")}
+        />
+      </div>
+    );
+  }
 
   // Changement de mois ou d'équipe
   const loadMonthData = (targetDate: Date, targetTeamId?: string) => {
@@ -227,7 +259,16 @@ export default function CalendarView({
           )}
         </h2>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode("mobile")}
+            className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition shadow-sm flex items-center gap-1.5"
+            title="Basculer vers la vue mobile optimisée pour les réservations rapides"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Vue Mobile (Rapide)</span>
+            <span className="sm:hidden">Mobile</span>
+          </button>
           <button
             onClick={handlePrevMonth}
             className="px-3 py-1.5 text-sm font-medium bg-[var(--card-bg)] border border-[var(--border)] rounded-lg hover:bg-gray-100 transition shadow-sm flex items-center gap-1"
