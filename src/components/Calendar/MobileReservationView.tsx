@@ -213,20 +213,44 @@ export default function MobileReservationView({
     });
   }, [selectedTeamId]);
 
-  // Actualisation automatique au focus de l'écran ou par intervalle
+  // Actualisation automatique en temps réel (auto-refresh) :
+  // - Polling toutes les 5 secondes lorsque la page est visible
+  // - Actualisation immédiate au retour sur l'onglet ou l'application (visibilitychange & focus)
+  // - Prise en charge des semaines à cheval sur deux mois
   useEffect(() => {
-    const handleFocus = () => {
-      loadMonthData(new Date(selectedDateKey + "T12:00:00"));
+    const refresh = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
+      const curDate = new Date(selectedDateKey + "T12:00:00");
+      loadMonthData(curDate);
+
+      // Si la semaine commence et se termine sur deux mois différents, actualiser les deux mois
+      const wEnd = new Date(weekStart);
+      wEnd.setDate(wEnd.getDate() + 6);
+      if (weekStart.getMonth() !== wEnd.getMonth() || weekStart.getFullYear() !== wEnd.getFullYear()) {
+        const otherDate = curDate.getMonth() === weekStart.getMonth() ? wEnd : weekStart;
+        loadMonthData(otherDate);
+      }
     };
-    window.addEventListener("focus", handleFocus);
-    const interval = setInterval(() => {
-      loadMonthData(new Date(selectedDateKey + "T12:00:00"));
-    }, 15000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const interval = setInterval(refresh, 5000);
+
     return () => {
-      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearInterval(interval);
     };
-  }, [loadMonthData, selectedDateKey]);
+  }, [loadMonthData, selectedDateKey, weekStart]);
 
   // Changement d'onglet avec rafraîchissement des données de l'équipe
   const handleTabChange = (tab: TabType) => {
@@ -608,6 +632,15 @@ export default function MobileReservationView({
         </div>
 
         <div className="flex items-center gap-1.5">
+          <span
+            data-testid="live-indicator"
+            className="flex items-center gap-1 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0 select-none"
+            title="Mises à jour automatiques en direct actives"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="hidden xs:inline">Direct</span>
+          </span>
+
           <button
             onClick={() => {
               loadMonthData(new Date(selectedDateKey + "T12:00:00"));

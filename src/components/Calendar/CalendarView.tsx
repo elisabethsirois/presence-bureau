@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import { SessionUser } from "@/lib/auth";
 import { togglePresenceAction, getMonthPresencesAction } from "@/lib/actions/presence";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, Smartphone } from "lucide-react";
@@ -99,7 +99,7 @@ export default function CalendarView({
 
 
   // Changement de mois ou d'équipe
-  const loadMonthData = (targetDate: Date, targetTeamId?: string) => {
+  const loadMonthData = useCallback((targetDate: Date, targetTeamId?: string) => {
     setCurrentDate(targetDate);
     startTransition(async () => {
       const res = await getMonthPresencesAction(
@@ -119,7 +119,34 @@ export default function CalendarView({
       }
       setPresencesMap(newMap);
     });
-  };
+  }, [selectedTeamId]);
+
+  // Auto-refresh pour récupérer les présences et inscriptions en temps réel
+  useEffect(() => {
+    const refresh = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
+      loadMonthData(currentDate, selectedTeamId);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const interval = setInterval(refresh, 5000);
+
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [currentDate, selectedTeamId, loadMonthData]);
 
   const handlePrevMonth = () => {
     const d = new Date(year, month - 1, 1);
@@ -253,6 +280,13 @@ export default function CalendarView({
         <h2 className="text-xl font-bold capitalize text-[var(--text)] flex items-center gap-2">
           <CalendarIcon className="w-5 h-5 text-[var(--primary)]" />
           {monthName}
+          <span
+            className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 normal-case"
+            title="Mises à jour automatiques en direct actives"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Direct</span>
+          </span>
           {isPending && (
             <span className="text-xs font-normal text-[var(--muted)] animate-pulse">
               (chargement...)
