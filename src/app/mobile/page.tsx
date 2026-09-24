@@ -31,7 +31,12 @@ export default async function MobilePage() {
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
+  let activeTeam = null;
   if (activeTeamId) {
+    activeTeam = await prisma.team.findUnique({
+      where: { id: activeTeamId },
+    });
+
     teamMembers = await prisma.user.findMany({
       where: { teamId: activeTeamId },
       select: { id: true, firstName: true, lastName: true },
@@ -89,7 +94,7 @@ export default async function MobilePage() {
         initialMonth={month}
         initialMembers={teamMembers}
         initialPresences={initialPresences}
-        allTeams={allTeams}
+        allTeams={allTeams.length > 0 ? allTeams : (activeTeam ? [{ id: activeTeam.id, name: activeTeam.name }] : [])}
         activeTeamId={activeTeamId}
       />
     </div>
