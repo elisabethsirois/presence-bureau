@@ -28,6 +28,7 @@ import {
   SlidersHorizontal,
   CalendarDays,
   ListFilter,
+  RotateCw,
 } from "lucide-react";
 import InstallPwaPrompt from "@/components/PWA/InstallPwaPrompt";
 
@@ -167,7 +168,7 @@ export default function MobileReservationView({
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
 
   const daysScrollRef = useRef<HTMLDivElement>(null);
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -197,9 +198,41 @@ export default function MobileReservationView({
           pm: (p.pmStatus as StatusType) || "NONE",
         };
       }
-      setPresencesMap((prev) => ({ ...prev, ...newMap }));
+      setPresencesMap((prev) => {
+        const copy = { ...prev };
+        const prefix = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, "0")}-`;
+        for (const k of Object.keys(copy)) {
+          if (k.startsWith(prefix)) {
+            delete copy[k];
+          }
+        }
+        return { ...copy, ...newMap };
+      });
     });
   }, [selectedTeamId]);
+
+  // Actualisation automatique au focus de l'écran ou par intervalle
+  useEffect(() => {
+    const handleFocus = () => {
+      loadMonthData(new Date(selectedDateKey + "T12:00:00"));
+    };
+    window.addEventListener("focus", handleFocus);
+    const interval = setInterval(() => {
+      loadMonthData(new Date(selectedDateKey + "T12:00:00"));
+    }, 15000);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(interval);
+    };
+  }, [loadMonthData, selectedDateKey]);
+
+  // Changement d'onglet avec rafraîchissement des données de l'équipe
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (tab === "team" || tab === "schedule") {
+      loadMonthData(new Date(selectedDateKey + "T12:00:00"));
+    }
+  };
 
   // Jours de la semaine affichée (Lundi à Dimanche - 7 jours)
   const weekDays = useMemo(() => {
@@ -534,6 +567,18 @@ export default function MobileReservationView({
         </div>
 
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              loadMonthData(new Date(selectedDateKey + "T12:00:00"));
+              showToast("Données actualisées");
+            }}
+            disabled={isPending}
+            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg active-press transition disabled:opacity-50"
+            title="Actualiser les présences de l'équipe"
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${isPending ? "animate-spin text-blue-600" : ""}`} />
+          </button>
+
           {onSwitchToDesktop && (
             <button
               onClick={onSwitchToDesktop}
@@ -1515,7 +1560,7 @@ export default function MobileReservationView({
         <div className="max-w-md mx-auto grid grid-cols-4 h-15">
           {/* TAB 1: PLANNING */}
           <button
-            onClick={() => setActiveTab("schedule")}
+            onClick={() => handleTabChange("schedule")}
             className={`flex flex-col items-center justify-center gap-0.5 transition ${
               activeTab === "schedule"
                 ? "text-blue-600 font-bold"
@@ -1528,7 +1573,7 @@ export default function MobileReservationView({
 
           {/* TAB 2: MON ÉQUIPE */}
           <button
-            onClick={() => setActiveTab("team")}
+            onClick={() => handleTabChange("team")}
             className={`flex flex-col items-center justify-center gap-0.5 transition ${
               activeTab === "team"
                 ? "text-blue-600 font-bold"
@@ -1541,7 +1586,7 @@ export default function MobileReservationView({
 
           {/* TAB 3: SEMAINE TYPE */}
           <button
-            onClick={() => setActiveTab("templates")}
+            onClick={() => handleTabChange("templates")}
             className={`flex flex-col items-center justify-center gap-0.5 transition ${
               activeTab === "templates"
                 ? "text-blue-600 font-bold"
@@ -1554,7 +1599,7 @@ export default function MobileReservationView({
 
           {/* TAB 4: OPTIONS & APP */}
           <button
-            onClick={() => setActiveTab("options")}
+            onClick={() => handleTabChange("options")}
             className={`flex flex-col items-center justify-center gap-0.5 transition ${
               activeTab === "options"
                 ? "text-blue-600 font-bold"
