@@ -180,7 +180,7 @@ export default function CalendarView({
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex items-center gap-2 text-amber-900 font-medium">
             <Users className="w-4 h-4 text-amber-700" />
-            <span>Vue Administrateur - Changer d'équipe :</span>
+            <span>Vue Administrateur - Changer d&apos;équipe :</span>
           </div>
           <select
             value={selectedTeamId || ""}
@@ -239,7 +239,7 @@ export default function CalendarView({
             onClick={handleToday}
             className="px-3 py-1.5 text-sm font-medium bg-[var(--card-bg)] border border-[var(--border)] rounded-lg hover:bg-gray-100 transition shadow-sm"
           >
-            Aujourd'hui
+            Aujourd&apos;hui
           </button>
           <button
             onClick={handleNextMonth}
@@ -339,6 +339,7 @@ export default function CalendarView({
               <div className="flex flex-col gap-1 mt-1 pt-1.5 border-t border-dashed border-[var(--border)] flex-1">
                 {(["am", "pm"] as const).map((period) => {
                   const periodEntries = teamMembers.filter((m) => {
+                    if (m.id === currentUser.id) return false;
                     const st = presencesMap[dateKey]?.[m.id]?.[period];
                     return st && st !== "NONE";
                   });

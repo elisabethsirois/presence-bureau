@@ -64,9 +64,11 @@ export default function AdminPanel({
       if (res.error) {
         showNotification(undefined, res.error);
       } else {
+        if (res.data) {
+          setTeams((prev) => [...prev, res.data!].sort((a, b) => a.name.localeCompare(b.name)));
+        }
         showNotification("Équipe créée avec succès !");
         form.reset();
-        window.location.reload();
       }
     });
   };
@@ -95,15 +97,19 @@ export default function AdminPanel({
     const targetTeamObj = teams.find((t) => t.id === targetTeamId) || null;
 
     startTransition(async () => {
-      await updateUserTeamAction(userId, targetTeamId);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId
-            ? { ...u, teamId: targetTeamId, team: targetTeamObj ? { id: targetTeamObj.id, name: targetTeamObj.name } : null }
-            : u
-        )
-      );
-      showNotification("Équipe de l'utilisateur mise à jour !");
+      const res = await updateUserTeamAction(userId, targetTeamId);
+      if (res.error) {
+        showNotification(undefined, res.error);
+      } else {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userId
+              ? { ...u, teamId: targetTeamId, team: targetTeamObj ? { id: targetTeamObj.id, name: targetTeamObj.name } : null }
+              : u
+          )
+        );
+        showNotification("Équipe de l'utilisateur mise à jour !");
+      }
     });
   };
 
@@ -220,7 +226,7 @@ export default function AdminPanel({
 
           {teams.length === 0 && (
             <div className="col-span-full py-6 text-center text-sm text-[var(--muted)]">
-              Aucune équipe créée pour l'instant.
+              Aucune équipe créée pour l&apos;instant.
             </div>
           )}
         </div>
@@ -234,7 +240,7 @@ export default function AdminPanel({
             Gestion des Utilisateurs ({users.length})
           </h2>
           <p className="text-xs text-[var(--muted)] mt-1">
-            Attribuez les équipes, gérez les rôles d'administrateur ou supprimez des comptes.
+            Attribuez les équipes, gérez les rôles d&apos;administrateur ou supprimez des comptes.
           </p>
         </div>
 

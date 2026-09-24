@@ -68,7 +68,7 @@ export default async function HomePage() {
               Aucune équipe assignée
             </h2>
             <p className="text-sm text-[var(--muted)] mb-6">
-              Vous n'êtes actuellement rattaché(e) à aucune équipe. Un administrateur doit vous affecter à une équipe pour voir et renseigner vos présences.
+              Vous n&apos;êtes actuellement rattaché(e) à aucune équipe. Un administrateur doit vous affecter à une équipe pour voir et renseigner vos présences.
             </p>
             {session.role === "ADMIN" && (
               <Link

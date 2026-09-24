@@ -2,9 +2,16 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const SECRET_KEY = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "presence_bureau_secret_key_super_secure_12345"
-);
+function getSecretKey(): Uint8Array {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Configuration critique : variable d'environnement AUTH_SECRET manquante en production.");
+    }
+    return new TextEncoder().encode("presence_bureau_dev_fallback_secret_key_12345");
+  }
+  return new TextEncoder().encode(secret);
+}
 
 export interface SessionUser {
   id: string;
@@ -21,7 +28,7 @@ export async function createSession(user: SessionUser) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
-    .sign(SECRET_KEY);
+    .sign(getSecretKey());
 
   const cookieStore = await cookies();
   cookieStore.set("auth_token", token, {
@@ -42,7 +49,7 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, SECRET_KEY);
+    const { payload } = await jwtVerify(token, getSecretKey());
     return payload as unknown as SessionUser;
   } catch {
     return null;
@@ -61,6 +68,17 @@ export async function requireAdmin(): Promise<SessionUser> {
   const session = await requireAuth();
   if (session.role !== "ADMIN") {
     redirect("/");
+  }
+  return session;
+}
+
+export async function checkAdminSession(): Promise<SessionUser> {
+  const session = await getSession();
+  if (!session) {
+    throw new Error("Authentification requise.");
+  }
+  if (session.role !== "ADMIN") {
+    throw new Error("Droits administrateur requis.");
   }
   return session;
 }
