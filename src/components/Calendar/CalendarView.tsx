@@ -97,22 +97,6 @@ export default function CalendarView({
     year: "numeric",
   }).format(currentDate);
 
-  if (isMobile) {
-    return (
-      <div className="w-full">
-        <MobileReservationView
-          currentUser={currentUser}
-          initialYear={initialYear}
-          initialMonth={initialMonth}
-          initialMembers={teamMembers}
-          initialPresences={initialPresences}
-          allTeams={allTeams}
-          activeTeamId={selectedTeamId}
-          onSwitchToDesktop={() => setViewMode("desktop")}
-        />
-      </div>
-    );
-  }
 
   // Changement de mois ou d'équipe
   const loadMonthData = (targetDate: Date, targetTeamId?: string) => {
@@ -206,8 +190,25 @@ export default function CalendarView({
   const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
   return (
-    <div className="w-full max-w-[1240px] mx-auto">
-      {/* Barre de contrôle Admin pour basculer d'équipe */}
+    <div className="w-full">
+      {viewMode !== "desktop" && (
+        <div className={viewMode === "mobile" ? "block" : "block md:hidden"}>
+          <MobileReservationView
+            currentUser={currentUser}
+            initialYear={initialYear}
+            initialMonth={initialMonth}
+            initialMembers={teamMembers}
+            initialPresences={initialPresences}
+            allTeams={allTeams}
+            activeTeamId={selectedTeamId}
+            onSwitchToDesktop={() => setViewMode("desktop")}
+          />
+        </div>
+      )}
+
+      {viewMode !== "mobile" && (
+        <div className={viewMode === "desktop" ? "block w-full max-w-[1240px] mx-auto" : "hidden md:block w-full max-w-[1240px] mx-auto"}>
+          {/* Barre de contrôle Admin pour basculer d'équipe */}
       {currentUser.role === "ADMIN" && allTeams && allTeams.length > 0 && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex items-center gap-2 text-amber-900 font-medium">
@@ -421,5 +422,7 @@ export default function CalendarView({
         })}
       </div>
     </div>
+  )}
+</div>
   );
 }
