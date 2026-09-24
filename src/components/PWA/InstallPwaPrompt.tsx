@@ -94,9 +94,9 @@ export default function InstallPwaPrompt({
               <Smartphone className="w-5 h-5 text-white" />
             </div>
             <div className="truncate">
-              <h2 className="text-xs font-bold leading-tight">Installer l'application</h2>
+              <h2 className="text-xs font-bold leading-tight">Installer l&apos;application</h2>
               <p className="text-[11px] text-blue-100 truncate">
-                Accès direct sans passer par l'App Store
+                Accès direct sans passer par l&apos;App Store
               </p>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function InstallPwaPrompt({
                 <div className="p-3 bg-blue-50 rounded-2xl border border-blue-100 text-xs text-blue-900">
                   <p className="font-semibold mb-1">Sur iPhone / iPad (Safari) :</p>
                   <p className="text-[11.5px] leading-relaxed">
-                    Cette application s'installe directement depuis votre navigateur en 3 étapes :
+                    Cette application s&apos;installe directement depuis votre navigateur en 3 étapes :
                   </p>
                 </div>
 
@@ -187,8 +187,8 @@ export default function InstallPwaPrompt({
                     <div className="leading-snug">
                       Faites défiler et sélectionnez{" "}
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-200 font-semibold text-[11px]">
-                        <PlusSquare className="w-3 h-3 inline mr-1 text-gray-800" /> Sur l'écran
-                        d'accueil
+                        <PlusSquare className="w-3 h-3 inline mr-1 text-gray-800" /> Sur l&apos;écran
+                        d&apos;accueil
                       </span>
                       .
                     </div>
@@ -200,7 +200,7 @@ export default function InstallPwaPrompt({
                     </span>
                     <div className="leading-snug">
                       Touchez <strong className="text-gray-900 font-semibold">Ajouter</strong> en
-                      haut à droite. L'icône de l'application apparaîtra avec vos autres apps !
+                      haut à droite. L&apos;icône de l&apos;application apparaîtra avec vos autres apps !
                     </div>
                   </div>
                 </div>
@@ -209,8 +209,8 @@ export default function InstallPwaPrompt({
               /* Installation 1-Click Chromium (Android / PC) */
               <div className="space-y-4 my-3 text-center">
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  Ajoutez l'application sur votre écran d'accueil pour un accès instantané en plein
-                  écran, sans barre d'adresse ni passage par le Google Play Store ou l'App Store.
+                  Ajoutez l&apos;application sur votre écran d&apos;accueil pour un accès instantané en plein
+                  écran, sans barre d&apos;adresse ni passage par le Google Play Store ou l&apos;App Store.
                 </p>
 
                 <button
@@ -225,17 +225,17 @@ export default function InstallPwaPrompt({
               /* Guide Général */
               <div className="space-y-3 my-2 text-xs text-gray-600">
                 <p className="leading-relaxed">
-                  Pour installer l'application sur votre écran d'accueil :
+                  Pour installer l&apos;application sur votre écran d&apos;accueil :
                 </p>
                 <div className="p-3 bg-gray-50 rounded-xl space-y-2">
                   <p>
                     <strong>Sur Android / Chrome :</strong> Ouvrez le menu du navigateur (⋮) et
-                    choisissez <em>"Installer l'application"</em> ou{" "}
-                    <em>"Ajouter à l'écran d'accueil"</em>.
+                    choisissez <em>&ldquo;Installer l&apos;application&rdquo;</em> ou{" "}
+                    <em>&ldquo;Ajouter à l&apos;écran d&apos;accueil&rdquo;</em>.
                   </p>
                   <p>
                     <strong>Sur iPhone / Safari :</strong> Touchez le bouton Partager puis{" "}
-                    <em>"Sur l'écran d'accueil"</em>.
+                    <em>&ldquo;Sur l&apos;écran d&apos;accueil&rdquo;</em>.
                   </p>
                 </div>
               </div>

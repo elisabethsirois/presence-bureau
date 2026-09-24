@@ -65,7 +65,7 @@ export default async function MobilePage() {
             Aucune équipe assignée
           </h2>
           <p className="text-xs text-[var(--muted)] mb-5">
-            Vous n'êtes rattaché(e) à aucune équipe. Un administrateur doit vous affecter pour voir et réserver vos présences.
+            Vous n&apos;êtes rattaché(e) à aucune équipe. Un administrateur doit vous affecter pour voir et réserver vos présences.
           </p>
           {session.role === "ADMIN" && (
             <Link

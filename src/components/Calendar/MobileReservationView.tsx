@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useCallback } from "react";
 import { SessionUser } from "@/lib/auth";
 import {
   togglePresenceAction,
@@ -368,7 +368,7 @@ export default function MobileReservationView({
   };
 
   // Données de l'équipe pour un jour spécifique
-  const getDayPresenceBreakdown = (dateKey: string) => {
+  const getDayPresenceBreakdown = useCallback((dateKey: string) => {
     const atOffice: { member: TeamMember; period: "all" | "am" | "pm" }[] = [];
     const atRemote: { member: TeamMember; period: "all" | "am" | "pm" }[] = [];
     const atAbsent: { member: TeamMember; period: "all" | "am" | "pm" }[] = [];
@@ -404,7 +404,7 @@ export default function MobileReservationView({
     }
 
     return { atOffice, atRemote, atAbsent, notSet };
-  };
+  }, [teamMembers, presencesMap]);
 
   // Liste filtrée des collègues pour l'onglet Équipe
   const filteredTeamBreakdown = useMemo(() => {
@@ -423,7 +423,7 @@ export default function MobileReservationView({
         `${m.firstName} ${m.lastName}`.toLowerCase().includes(q)
       ),
     };
-  }, [selectedTeamDate, presencesMap, teamMembers, teamSearchQuery]);
+  }, [selectedTeamDate, teamSearchQuery, getDayPresenceBreakdown]);
 
   // Calcul du calendrier mensuel compact
   const monthCalendarData = useMemo(() => {
@@ -529,7 +529,7 @@ export default function MobileReservationView({
                 onClick={handleCurrentWeek}
                 className="flex-1 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition active-press text-center"
               >
-                Aujourd'hui
+                Aujourd&apos;hui
               </button>
               <button
                 onClick={() => setShowPresetModal(true)}
@@ -595,7 +595,7 @@ export default function MobileReservationView({
                         </div>
                         <div className="text-[11px] text-gray-500">
                           {day.isToday && (
-                            <span className="text-blue-600 font-bold mr-1.5">● Aujourd'hui</span>
+                            <span className="text-blue-600 font-bold mr-1.5">● Aujourd&apos;hui</span>
                           )}
                           {officeCount > 0 ? (
                             <span
@@ -776,7 +776,7 @@ export default function MobileReservationView({
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <Users className="w-4 h-4 text-blue-600" />
-                Présences de l'équipe
+                Présences de l&apos;équipe
               </h2>
               <span className="text-xs font-semibold text-gray-500">
                 {teamMembers.length} membres
@@ -849,7 +849,7 @@ export default function MobileReservationView({
               </div>
             ) : (
               <p className="text-xs text-gray-400 italic py-2">
-                Personne n'a encore réservé au bureau ce jour-là.
+                Personne n&apos;a encore réservé au bureau ce jour-là.
               </p>
             )}
           </div>
@@ -1044,15 +1044,15 @@ export default function MobileReservationView({
                 <Download className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-bold leading-tight">Installer l'application</h3>
+                <h3 className="text-sm font-bold leading-tight">Installer l&apos;application</h3>
                 <p className="text-xs text-blue-100">
-                  Accès direct sans passer par le store d'applications
+                  Accès direct sans passer par le store d&apos;applications
                 </p>
               </div>
             </div>
 
             <p className="text-xs text-blue-50 leading-relaxed">
-              Installez l'application directement sur l'écran d'accueil de votre téléphone pour
+              Installez l&apos;application directement sur l&apos;écran d&apos;accueil de votre téléphone pour
               accéder à votre planning en un geste et sans barre de navigateur.
             </p>
 
@@ -1061,7 +1061,7 @@ export default function MobileReservationView({
               className="w-full py-2.5 bg-white text-blue-700 font-bold text-xs rounded-xl shadow-sm hover:bg-blue-50 active-press transition flex items-center justify-center gap-2"
             >
               <Download className="w-4 h-4" />
-              <span>Voir comment installer l'app</span>
+              <span>Voir comment installer l&apos;app</span>
             </button>
           </div>
 
@@ -1070,7 +1070,7 @@ export default function MobileReservationView({
             <div className="bg-[var(--card-bg)] p-3.5 rounded-2xl border border-[var(--border)] shadow-xs space-y-2">
               <h3 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600" />
-                Administration : Changer d'équipe
+                Administration : Changer d&apos;équipe
               </h3>
               <select
                 value={selectedTeamId || ""}
