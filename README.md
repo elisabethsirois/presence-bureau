@@ -7,7 +7,14 @@ Migrée depuis un prototype statique vers une architecture **Next.js 15 (App Rou
 
 ## 🚀 Fonctionnalités Clés
 
-- **Authentification Sécurisée** : Inscription (`/register`) avec choix d'équipe et connexion (`/login`) via identifiants sécurisés (mots de passe hachés, cookies HTTP-only).
+- **Authentification & Sécurité Renforcée** :
+  - **Invitations aux Équipes (`/admin`)** : L'accès est réservé aux personnes invitées par un administrateur. Chaque invitation génère un jeton sécurisé rattachant automatiquement le nouvel utilisateur à son équipe.
+  - **Vérification de Courriel Obligatoire (`/verify-email`)** : Code OTP à 6 chiffres et lien magique par courriel (avec mode simulation locale immédiat en développement et support SMTP/Resend).
+  - **Protection Anti-Force Brute (Rate Limiting)** : Limitation automatique des tentatives de connexion pour bloquer les attaques par dictionnaire ou force brute.
+  - **Politique de Complexité des Mots de Passe** : Exigence de 8+ caractères, majuscule, minuscule et chiffre avec jauge de robustesse visuelle en temps réel.
+  - **Réinitialisation de Mot de Passe Oublié (`/forgot-password` & `/reset-password`)** : Procédure sécurisée à jeton éphémère.
+  - **Journal d'Audit de Sécurité (`/admin`)** : Traçabilité complète des connexions, échecs d'authentification, invitations envoyées et modifications de rôles.
+  - **En-têtes HTTP Durcis** : Content-Security-Policy (CSP), protection anti-clickjacking (`X-Frame-Options: DENY`), `X-Content-Type-Options: nosniff`, et `Strict-Transport-Security` (HSTS).
 - **Cloisonnement par Équipe** : Chaque utilisateur ne voit sur le calendrier que les présences des membres de son équipe.
 - **Calendrier Interactif & Intuitif** :
   - Vue mensuelle claire reprenant fidèlement le design original.

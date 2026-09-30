@@ -20,25 +20,30 @@ enum PresenceStatus {
 }
 
 model Team {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  members   User[]
+  id          String       @id @default(cuid())
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  members     User[]
+  invitations Invitation[]
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         Role       @default(USER)
-  teamId       String?
-  team         Team?      @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  presences    Presence[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  passwordHash        String
+  firstName           String
+  lastName            String
+  role                Role                 @default(USER)
+  emailVerified       Boolean              @default(false)
+  teamId              String?
+  team                Team?                @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  presences           Presence[]
+  invitationsCreated  Invitation[]         @relation("AdminInvitations")
+  passwordResetTokens PasswordResetToken[]
+  auditLogs           AuditLog[]           @relation("ActorAuditLogs")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model Presence {
@@ -52,4 +57,61 @@ model Presence {
 
   @@unique([date, userId])
   @@index([date])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  email       String
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  role        Role     @default(USER)
+  token       String   @unique
+  invitedById String
+  invitedBy   User     @relation("AdminInvitations", fields: [invitedById], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@unique([email, teamId])
+  @@index([token])
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  actorId   String?
+  actor     User?    @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  target    String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([createdAt])
 }

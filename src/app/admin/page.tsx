@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import Navbar from "@/components/Navbar";
 import AdminPanel from "@/components/Admin/AdminPanel";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const session = await requireAdmin();
 
@@ -24,12 +26,49 @@ export default async function AdminPage() {
       lastName: true,
       email: true,
       role: true,
+      emailVerified: true,
       teamId: true,
+      createdAt: true,
       team: {
         select: { id: true, name: true },
       },
     },
     orderBy: [{ role: "asc" }, { firstName: "asc" }],
+  });
+
+  const invitations = await prisma.invitation.findMany({
+    select: {
+      id: true,
+      email: true,
+      teamId: true,
+      role: true,
+      token: true,
+      expiresAt: true,
+      createdAt: true,
+      team: {
+        select: { id: true, name: true },
+      },
+      invitedBy: {
+        select: { firstName: true, lastName: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const auditLogs = await prisma.auditLog.findMany({
+    take: 40,
+    select: {
+      id: true,
+      action: true,
+      target: true,
+      details: true,
+      ipAddress: true,
+      createdAt: true,
+      actor: {
+        select: { firstName: true, lastName: true, email: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
   });
 
   const currentTeam = session.teamId
@@ -44,6 +83,15 @@ export default async function AdminPage() {
           currentUserId={session.id}
           initialTeams={teams}
           initialUsers={users}
+          initialInvitations={invitations.map((inv) => ({
+            ...inv,
+            expiresAt: inv.expiresAt.toISOString(),
+            createdAt: inv.createdAt.toISOString(),
+          }))}
+          initialAuditLogs={auditLogs.map((log) => ({
+            ...log,
+            createdAt: log.createdAt.toISOString(),
+          }))}
         />
       </div>
     </div>
