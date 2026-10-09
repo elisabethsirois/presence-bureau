@@ -12,7 +12,13 @@ function getSecretKey(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-const PUBLIC_ROUTES = ["/login", "/register"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/register",
+  "/verify-email",
+  "/forgot-password",
+  "/reset-password",
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -26,34 +32,48 @@ export async function middleware(req: NextRequest) {
   }
 
   const token = req.cookies.get("auth_token")?.value;
-  let user: { id: string; role?: string; [key: string]: unknown } | null = null;
+  let user: { id: string; role?: string; emailVerified?: boolean; [key: string]: unknown } | null = null;
 
   if (token) {
     try {
       const { payload } = await jwtVerify(token, getSecretKey());
-      user = payload as unknown as { id: string; role?: string };
+      user = payload as unknown as { id: string; role?: string; emailVerified?: boolean };
     } catch {
       // Ignorer si invalide
     }
   }
 
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
-  // Non authentifié -> redirection login
+  // 1. Non authentifié -> redirection login
   if (!user && !isPublicRoute) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // Déjà connecté -> redirection accueil
-  if (user && isPublicRoute) {
+  // 2. Connecté mais courriel non vérifié -> rediriger vers la page de vérification
+  if (user && user.emailVerified === false && pathname !== "/verify-email") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/verify-email";
+    return NextResponse.redirect(url);
+  }
+
+  // 3. Déjà connecté et courriel vérifié -> redirection accueil si tentative d'accéder aux routes publiques d'authentification
+  if (
+    user &&
+    user.emailVerified !== false &&
+    (pathname === "/login" ||
+      pathname === "/register" ||
+      pathname === "/forgot-password" ||
+      pathname === "/reset-password")
+  ) {
     const url = req.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  // Zone Admin réservée aux ADMIN
+  // 4. Zone Admin réservée aux ADMIN
   if (pathname.startsWith("/admin") && user?.role !== "ADMIN") {
     const url = req.nextUrl.clone();
     url.pathname = "/";

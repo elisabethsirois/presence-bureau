@@ -34,6 +34,7 @@ async function main() {
       lastName: "Sirois",
       passwordHash: adminPassword,
       role: Role.ADMIN,
+      emailVerified: true,
       teamId: teamAlpha.id,
     },
   });
@@ -45,6 +46,7 @@ async function main() {
       lastName: "Bonenfant",
       passwordHash: userPassword,
       role: Role.USER,
+      emailVerified: true,
       teamId: teamAlpha.id,
     },
   });
@@ -56,6 +58,7 @@ async function main() {
       lastName: "Fernandes",
       passwordHash: userPassword,
       role: Role.USER,
+      emailVerified: true,
       teamId: teamAlpha.id,
     },
   });
@@ -68,6 +71,7 @@ async function main() {
       lastName: "Tremblay",
       passwordHash: userPassword,
       role: Role.USER,
+      emailVerified: true,
       teamId: teamBeta.id,
     },
   });

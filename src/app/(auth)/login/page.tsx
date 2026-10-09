@@ -1,10 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { loginAction, AuthState } from "@/lib/actions/auth";
 import Link from "next/link";
+import { Shield, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const isVerified = searchParams.get("verified") === "true";
+  const isReset = searchParams.get("reset") === "success";
+
   const [state, formAction, isPending] = useActionState<AuthState | null, FormData>(
     loginAction,
     null
@@ -14,15 +20,46 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--bg)]">
       <div className="w-full max-w-md bg-[var(--card-bg)] border border-[var(--border)] rounded-2xl shadow-sm p-8">
         <div className="mb-6 text-center">
+          <div className="w-12 h-12 bg-blue-50 text-[var(--primary)] rounded-full flex items-center justify-center mx-auto mb-3">
+            <Shield className="w-6 h-6" />
+          </div>
           <h1 className="text-2xl font-bold text-[var(--text)]">Connexion</h1>
           <p className="text-sm text-[var(--muted)] mt-1">
-            Planification des présences au bureau
+            Planification sécurisée des présences au bureau
           </p>
         </div>
 
+        {isVerified && (
+          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>Votre adresse courriel a été validée avec succès ! Connectez-vous ci-dessous.</span>
+          </div>
+        )}
+
+        {isReset && (
+          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>Votre mot de passe a été modifié avec succès.</span>
+          </div>
+        )}
+
         {state?.error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-            {state.error}
+          <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p>{state.error}</p>
+                {state.unverifiedEmail && (
+                  <Link
+                    href={`/verify-email?email=${encodeURIComponent(state.unverifiedEmail)}`}
+                    className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-red-800 underline hover:text-red-950"
+                  >
+                    <span>Valider mon courriel maintenant</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -39,18 +76,26 @@ export default function LoginPage() {
               name="email"
               type="email"
               required
-              placeholder="ex. nom@bureau.com"
+              placeholder="nom@bureau.com"
               className="w-full px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-[var(--text)] mb-1"
-            >
-              Mot de passe
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-[var(--text)]"
+              >
+                Mot de passe
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-[var(--primary)] hover:underline"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
             <input
               id="password"
               name="password"
@@ -76,10 +121,24 @@ export default function LoginPage() {
             href="/register"
             className="text-[var(--primary)] font-medium hover:underline"
           >
-            Créer un compte
+            S&apos;inscrire avec une invitation
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--bg)] text-sm text-[var(--muted)]">
+          Chargement...
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

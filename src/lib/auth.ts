@@ -21,6 +21,7 @@ export interface SessionUser {
   role: "USER" | "ADMIN";
   teamId: string | null;
   teamName?: string;
+  emailVerified?: boolean;
 }
 
 export async function createSession(user: SessionUser) {
@@ -61,6 +62,11 @@ export async function requireAuth(): Promise<SessionUser> {
   if (!session) {
     redirect("/login");
   }
+
+  if (session.emailVerified === false) {
+    redirect(`/verify-email?email=${encodeURIComponent(session.email)}`);
+  }
+
   return session;
 }
 
